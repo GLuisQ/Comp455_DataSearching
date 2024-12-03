@@ -56,18 +56,18 @@ def open_filter_modal():
 root = tk.Tk()
 root.title("Data Viewer")
 style = ttk.Style(root)
-style.configure("RedX.TButton", 
-    background="red",       # Set the background to red
-    foreground="red",     # Set the text (X) to white
-    font=("Arial", 10, "bold"),
-    padding=5)              # Add some padding around the button text
+
 # Apply custom themes (light and dark)
-root.tk.call("source", "forest-light.tcl")  # Load light theme
-root.tk.call("source", "forest-dark.tcl")   # Load dark theme
+root.tk.call("source", "../theme/forest-light.tcl")  # Load light theme
+root.tk.call("source", "../theme/forest-dark.tcl")   # Load dark theme
 # Set active theme to dark
 style.theme_use("forest-dark")
 
-
+style.configure("RedX.TButton", 
+    foreground="red",  # Set the text color to red
+    font=("Arial", 10, "bold"),
+    padding=5
+    )
 
 # Main frame setup
 frame = ttk.Frame(root)
