@@ -1,125 +1,157 @@
 import tkinter as tk
 from tkinter import ttk
-from datetime import datetime
 
-# Example data
-data = [
-    ["Afghanistan", "", "24/03/2020", "Full", "https://www.thestatesman.com/world/afghan-govt-imposes-lockdown-coronavirus-cases-increase-15-1502870945.html"],
-    ["Albania", "", "08/03/2020", "Full", "https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Albania"],
-    ["Algeria", "", "24/03/2020", "Full", "https://www.garda.com/crisis24/news-alerts/325896/algeria-government-implements-lockdown-and-curfew-in-blida-and-algiers-march-23-update-7"],
-    ["Andorra", "", "16/03/2020", "Full", "https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Andorra"],
-    ["Angola", "", "24/03/2020", "Full", "https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Angola"],
-]
 
-# Sorting state for each column
-headers = {
-    0: {"text": "Country/Region", "reverse": False},
-    1: {"text": "Province", "reverse": False},
-    2: {"text": "Date", "reverse": False},
-    3: {"text": "Type", "reverse": False},
-    4: {"text": "Reference", "reverse": False},
-}
+def clear_country():
+    country_entry.delete(0, 'end')
 
-# Functions for sorting
-def update_treeview(treeview, data):
-    """Clears and repopulates the TreeView with updated data."""
-    for row in treeview.get_children():
-        treeview.delete(row)
-    for item in data:
-        treeview.insert("", "end", values=item)
 
-def sort_treeview(treeview, column_index, reverse):
-    """Sorts the TreeView data."""
-    global data
-    if column_index == 2:  # Date column
-        sorted_data = sorted(
-            data,
-            key=lambda x: datetime.strptime(x[column_index], "%d/%m/%Y") if x[column_index] else datetime.min,
-            reverse=reverse
-        )
-    else:  # Text columns
-        sorted_data = sorted(data, key=lambda x: x[column_index], reverse=reverse)
+def clear_province():
+    province_entry.delete(0, 'end')
 
-    update_treeview(treeview, sorted_data)
-    headers[column_index]["reverse"] = not reverse  # Toggle reverse order
 
-# Functions for calendar
-def open_calendar(root, date_entry):
-    """Opens a calendar popup for selecting a date."""
-    top = tk.Toplevel(root)
-    top.title("Select a Date")
-    
-    from tkcalendar import Calendar  # Import here to avoid dependency issues
-    cal = Calendar(top, selectmode="day", date_pattern="dd/mm/yyyy")
-    cal.pack(pady=10)
-    
-    def select_date():
-        date_entry.config(state="normal")
-        date_entry.delete(0, "end")
-        date_entry.insert(0, cal.get_date())
-        date_entry.config(state="readonly")
-        top.destroy()
-    
-    ttk.Button(top, text="OK", command=select_date).pack(pady=5)
+def clear_date():
+    date_entry.config(state="normal")
+    date_entry.delete(0, 'end')  # Clears the content of the date entry
+    date_entry.config(state="readonly")
 
-# Main Application
+
+def clear_second_date():
+    second_date_entry.config(state="normal")
+    second_date_entry.delete(0, 'end')
+    second_date_entry.config(state="readonly")
+
+
+def search_start():
+    print("Search button clicked!")
+
+
+def toggle_second_date():
+    if date_if_between.get() == "BETWEEN":
+        second_date_label.grid(row=4, column=0, pady=2)
+        second_date_frame.grid(row=4, column=2, sticky="ew", padx=8)
+        second_date_entry.pack(side="left", fill="x", expand=True)
+        second_date_button.pack(side="right")
+        second_date_clear_button.grid(row=4, column=3, padx=5)
+    else:
+        second_date_label.grid_forget()
+        second_date_frame.grid_forget()
+        second_date_entry.pack_forget()
+        second_date_button.pack_forget()
+        second_date_clear_button.grid_forget()
+
+
+def treeview_sort_column(treeview, col, reverse):
+    """Sort the Treeview column data."""
+    # Extract data from the column
+    data_list = [(treeview.set(child, col), child) for child in treeview.get_children('')]
+    try:
+        # Try to sort as numbers if possible
+        data_list.sort(key=lambda x: float(x[0]), reverse=reverse)
+    except ValueError:
+        # Otherwise sort as strings
+        data_list.sort(key=lambda x: x[0], reverse=reverse)
+    # Reorder rows in Treeview
+    for index, (_, child) in enumerate(data_list):
+        treeview.move(child, '', index)
+    # Toggle the sort order for the column
+    treeview.heading(col, command=lambda: treeview_sort_column(treeview, col, not reverse))
+
+
+# Main window
 root = tk.Tk()
 root.title("Data Viewer")
-style = ttk.Style(root)
 
-#Apply themes (modify paths to match your directory if needed)
-root.tk.call("source", "../theme/forest-light.tcl")  # Load light theme
-root.tk.call("source", "../theme/forest-dark.tcl")   # Load dark theme
-style.theme_use("forest-dark")
+# Style customization
+style = ttk.Style(root)
+style.configure("RedX.TButton", foreground="red", font=("Arial", 10, "bold"), padding=5)
 
 # Main frame setup
 frame = ttk.Frame(root)
-frame.pack(fill="both", expand=True)
+frame.pack(fill="both", expand=True, padx=10, pady=10)
 
+# Label frame for search functionality
+widgets_frame = ttk.LabelFrame(frame, text="---Filter Data---")
+widgets_frame.grid(row=0, column=0, padx=5, pady=5)
+
+# Country row
+country_label = ttk.Label(widgets_frame, text="Country:")
+country_label.grid(row=0, column=0, pady=2)
+
+country_entry = ttk.Entry(widgets_frame)
+country_entry.grid(row=0, column=2, sticky="ew", padx=6, pady=2)
+country_entry.insert(0, "Country Name")
+country_entry.bind("<FocusIn>", lambda e: country_entry.delete(0, 'end'))
+
+country_clear_button = ttk.Button(widgets_frame, text="X", width=2, command=clear_country, style="RedX.TButton")
+country_clear_button.grid(row=0, column=3, padx=6, pady=2)
+
+# Province row
+province_label = ttk.Label(widgets_frame, text="Province:")
+province_label.grid(row=1, column=0, pady=2)
+
+province_entry = ttk.Entry(widgets_frame)
+province_entry.grid(row=1, column=2, sticky="ew", padx=6, pady=2)
+province_entry.insert(0, "Province Name")
+province_entry.bind("<FocusIn>", lambda e: province_entry.delete(0, 'end'))
+
+province_clear_button = ttk.Button(widgets_frame, text="X", width=2, command=clear_province, style="RedX.TButton")
+province_clear_button.grid(row=1, column=3, padx=6, pady=2)
+
+# Date row
+date_label = ttk.Label(widgets_frame, text="Date:")
+date_label.grid(row=3, column=0, pady=2)
+
+date_if_between = ttk.Combobox(widgets_frame, values=["IF", "NOT", "BETWEEN"], state="readonly", width=10)
+date_if_between.grid(row=3, column=1, padx=(0, 0), pady=2, sticky="w")
+date_if_between.set("IF")
+date_if_between.bind("<<ComboboxSelected>>", lambda event: toggle_second_date())
+
+date_frame = ttk.Frame(widgets_frame)
+date_frame.grid(row=3, column=2, sticky="ew", padx=8)
+
+date_entry = ttk.Entry(date_frame, state="readonly")
+date_entry.pack(side="left", fill="x", expand=True)
+date_entry.insert(0, "Enter Date:")
+
+date_button = ttk.Button(date_frame, text="📅", width=2, command=lambda: print("Calendar popup here"))
+date_button.pack(side="right")
+
+date_clear_button = ttk.Button(widgets_frame, text="X", width=2, command=clear_date, style="RedX.TButton")
+date_clear_button.grid(row=3, column=3, padx=5)
+
+second_date_label = ttk.Label(widgets_frame, text="And date:")
+second_date_frame = ttk.Frame(widgets_frame)
+second_date_entry = ttk.Entry(second_date_frame, state="readonly")
+second_date_button = ttk.Button(second_date_frame, text="📅", width=2, command=lambda: print("Second calendar popup"))
+second_date_clear_button = ttk.Button(widgets_frame, text="❌", width=2, command=clear_second_date, style="RedX.TButton")
+
+# Search button
+search_button = ttk.Button(widgets_frame, text="Search", command=search_start)
+search_button.grid(row=6, column=0, columnspan=4, pady=10)
+
+# Treeview for displaying data
 treeFrame = ttk.Frame(frame)
 treeFrame.grid(row=0, column=1, pady=10)
 
-# Define TreeView columns
-cols = ("Country/Region", "Province", "Date", "Type", "Reference")
-treeview = ttk.Treeview(treeFrame, show="headings", column=cols, height=13)
-
-# Configure each column
-for col_idx, col_name in enumerate(cols):
-    treeview.heading(
-        col_name,
-        text=col_name,
-        command=lambda c=col_idx: sort_treeview(treeview, c, headers[c]["reverse"])
-    )
-    treeview.column(col_name, width=150, anchor="center")
-
+cols = ("Column 1", "Column 2", "Column 3", "Column 4")
+treeview = ttk.Treeview(treeFrame, show="headings", columns=cols, height=10)
 treeview.pack(fill="both", expand=True)
 
-# Populate initial data
-update_treeview(treeview, data)
+# Add headings with sorting functionality
+for col in cols:
+    treeview.heading(col, text=col, anchor="center",
+                     command=lambda _col=col: treeview_sort_column(treeview, _col, False))
+    treeview.column(col, anchor="center")
 
-# Widgets for Filters
-widgets_frame = ttk.LabelFrame(frame, text="---Filter Data---")
-widgets_frame.grid(row=0, column=0, padx=10, pady=10)
+# Insert sample data
+sample_data = [
+    ("Item 3", "25", "Data Z", "3.5"),
+    ("Item 1", "10", "Data X", "1.5"),
+    ("Item 2", "15", "Data Y", "2.5"),
+]
 
-# Country Filter
-country_label = ttk.Label(widgets_frame, text="Country:")
-country_label.grid(row=0, column=0, padx=5, pady=5)
-
-country_entry = ttk.Entry(widgets_frame)
-country_entry.grid(row=0, column=1, padx=5, pady=5)
-
-# Date Filter
-date_label = ttk.Label(widgets_frame, text="Date:")
-date_label.grid(row=1, column=0, padx=5, pady=5)
-
-date_entry = ttk.Entry(widgets_frame, state="readonly")
-date_entry.grid(row=1, column=1, padx=5, pady=5)
-
-date_button = ttk.Button(widgets_frame, text="📅", command=lambda: open_calendar(root, date_entry))
-date_button.grid(row=1, column=2, padx=5, pady=5)
-
-# Search Button
-search_button = ttk.Button(widgets_frame, text="Search", command=lambda: print("Search functionality pending!"))
-search_button.grid(row=2, column=0, columnspan=3, padx=5, pady=5)
+for row in sample_data:
+    treeview.insert("", "end", values=row)
 
 root.mainloop()
