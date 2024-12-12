@@ -59,7 +59,7 @@ class App:
         # basic outline of the UI
         self.treeview = ttk.Treeview(
             tree_frame,
-            columns=("Country/Region", "Province", "Date", "Type", "Reference"),
+            columns=("Country/Region", "State/Province", "Date", "Type", "Reference"),
             show="headings",
             yscrollcommand=scrollbar.set,
         )
