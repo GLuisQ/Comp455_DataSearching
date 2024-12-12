@@ -1,9 +1,10 @@
-import pandas as pd
-from tkinter import ttk
-from tkinter import messagebox
-import tkinter as tk
 import threading
+import tkinter as tk
 import webbrowser
+from tkinter import messagebox, ttk
+
+import pandas as pd
+
 
 #reads the csv database we have containing all the countries and data
 def load_countries():
@@ -71,9 +72,12 @@ class App:
         # add scrollbar to the frame 
         scrollbar.config(command=self.treeview.yview)
 
-        # this makes the double-click an event that opens the link in the "Reference" column
+        # this makes the double-click and enter key an event that opens the link in the "Reference" column
         self.treeview.bind("<Double-1>", self.on_double_click)
+        self.root.bind("<Return>", lambda event=None: self.search_data_threaded())
 
+        #Enables Ctrl + R , Ctrl + Q, and Ctrl + S hotkeys
+        self.root.bind("<Control-Key>", self.handle_ctrl_keys)
         # filters
         filter_frame = ttk.LabelFrame(self.root, text="Filters")
         filter_frame.pack(pady=10, padx=10, fill="x")
@@ -100,9 +104,31 @@ class App:
         # reset button
         reset_button = ttk.Button(filter_frame, text="Reset", command=self.reset_data)
         reset_button.grid(row=3, column=1, pady=10)
+        
+        # hotkeys label, using a function called get_hotkeys() to get text.
+        self.hotkeys_label = ttk.Label(filter_frame, text=self.get_hotkeys(), justify="left",  padding=5)
+        self.hotkeys_label.grid(row=0, column=2, rowspan=2, padx=50, pady=5, sticky="ns")
 
         # load initial data
         self.load_data_threaded()
+
+    #event handler for ctrl + r , ctrl + q
+    def handle_ctrl_keys(self, event):
+        key = event.keysym.lower()  
+        if key == "r":
+            self.reset_data()
+        elif key == "q":
+            self.root.quit()
+    # string for showing hotkeys, used in hotkeys_label
+    def get_hotkeys(self):
+        
+        hotkeys = (
+            "Hotkeys:\n"
+            "Enter : Search Data\n"
+            "Ctrl + R : Reset Filters\n"
+            "Ctrl + Q : Quit\n"
+        )
+        return hotkeys
 
     #loads the threaded data
     def load_data_threaded(self):
@@ -147,7 +173,11 @@ class App:
 
         self.treeview.delete(*self.treeview.get_children())
         for _, row in filtered_data.iterrows():
-            self.treeview.insert("", "end", values=row.tolist())
+            item_id = self.treeview.insert("", "end", values=row.tolist())
+
+            # Applies highlighting, dark yellow color.
+            self.treeview.tag_configure("highlight", background="#999900")  
+            self.treeview.item(item_id, tags="highlight")  # Tag the inserted row
 
     #this is what makes the reset button work
     def reset_data(self):

@@ -49,9 +49,10 @@ except Exception as e:
 # If you are using vs code before you run this code and enter pip install graphviz 
 # when you run this program it will save PNG in your Local C drive in the diagram folder for eg C/ diagram / Diagram.png
 '''
-from graphviz import Digraph
-import os
 import json
+import os
+
+from graphviz import Digraph
 
 # Configuration for dynamic diagram creation
 config = {
